@@ -31,6 +31,9 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
 - FI countdown widget output
 - Tax model selector with tax-drag sync
 - In-app Pro mode gate UI for advanced modules
+- Profile management actions: rename/delete selected profile
+- Enhanced multi-section PDF report formatting
+- FI milestone marker text on dashboard timeline
 
 ## Files
 - `index.html` — app layout/screen composition

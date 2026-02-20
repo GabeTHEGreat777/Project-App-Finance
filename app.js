@@ -5,6 +5,8 @@ $('runMonte')?.addEventListener('click', runMonteCarlo);
 $('syncTaxModel')?.addEventListener('click', () => { const v = +$('taxModel').value || 1; $('taxDrag').value = String(v); render(); runMonteCarlo(); });
 $('saveProfile')?.addEventListener('click', saveProfile);
 $('loadProfile')?.addEventListener('click', loadProfile);
+$('renameProfile')?.addEventListener('click', renameProfile);
+$('deleteProfile')?.addEventListener('click', deleteProfile);
 $('exportPdf')?.addEventListener('click', exportPdfReport);
 $('proMode')?.addEventListener('change', applyProMode);
 
@@ -162,6 +164,34 @@ function saveProfile(){
   $('profileStatus').textContent = `Saved profile: ${name}`;
 }
 
+function renameProfile(){
+  if(!isPro()){ $('profileStatus').textContent='Rename is Pro-only.'; return; }
+  const oldName = $('profileSelect')?.value;
+  if(!oldName) return;
+  const next = prompt('New profile name:', oldName);
+  if(!next || !next.trim()) return;
+  const profiles = getProfiles();
+  profiles[next.trim()] = profiles[oldName];
+  delete profiles[oldName];
+  setProfiles(profiles);
+  refreshProfileSelect();
+  $('profileSelect').value = next.trim();
+  $('profileStatus').textContent = `Renamed profile to: ${next.trim()}`;
+}
+
+function deleteProfile(){
+  if(!isPro()){ $('profileStatus').textContent='Delete is Pro-only.'; return; }
+  const name = $('profileSelect')?.value;
+  if(!name) return;
+  const ok = confirm(`Delete profile "${name}"?`);
+  if(!ok) return;
+  const profiles = getProfiles();
+  delete profiles[name];
+  setProfiles(profiles);
+  refreshProfileSelect();
+  $('profileStatus').textContent = `Deleted profile: ${name}`;
+}
+
 function loadProfile(){
   if(!isPro()){ $('profileStatus').textContent='Load profiles is Pro-only.'; return; }
   const name = $('profileSelect')?.value;
@@ -186,40 +216,44 @@ function exportPdfReport(){
   const p10 = $('p10').textContent;
   const p50 = $('p50').textContent;
   const p90 = $('p90').textContent;
-
   const annualSave=b.income*(b.saveRate/100);
   const fiTarget=annualSave/(wr/100||0.04);
 
-  const lines = [
-    'WealthArc - Wealth Projection Report',
-    'Tagline: See how your decisions shift your freedom date.',
-    '',
+  doc.setFontSize(22); doc.text('WealthArc', 14, 20);
+  doc.setFontSize(11); doc.text('Wealth Projection Report', 14, 27);
+  doc.setFontSize(10); doc.text('See how your decisions shift your freedom date.', 14, 33);
+
+  doc.setFontSize(12); doc.text('Core Inputs', 14, 45);
+  const core=[
     `Net Worth: ${currency(b.nw)}`,
     `Income: ${currency(b.income)}`,
     `Savings Rate: ${b.saveRate}%`,
-    `Raise %: ${b.raisePct}%`,
-    `Raise Invested %: ${b.raiseInvestPct}%`,
-    `Return %: ${b.ret}%`,
-    `Inflation %: ${b.infl}%`,
-    `Horizon: ${b.years} years`,
+    `Raise %: ${b.raisePct}% | Raise Invested %: ${b.raiseInvestPct}%`,
+    `Return %: ${b.ret}% | Inflation %: ${b.infl}% | Horizon: ${b.years}y`,
     `Tax Drag: ${$('taxDrag').value}% (model ${$('taxModel').value}%)`,
-    '',
-    `Scenario A: return ${$('retA').value}% | save ${$('saveA').value}% | invest raise ${$('investA').value}%`,
-    `Scenario B: return ${$('retB').value}% | save ${$('saveB').value}% | invest raise ${$('investB').value}%`,
-    `Scenario C: return ${$('retC').value}% | save ${$('saveC').value}% | invest raise ${$('investC').value}%`,
-    '',
+  ];
+  let y=52; core.forEach(line=>{ doc.text(line,14,y); y+=6; });
+
+  doc.setFontSize(12); doc.text('Scenario Comparison', 14, y+4); y += 10;
+  const scenario=[
+    `A: return ${$('retA').value}% | save ${$('saveA').value}% | invest raise ${$('investA').value}%`,
+    `B: return ${$('retB').value}% | save ${$('saveB').value}% | invest raise ${$('investB').value}%`,
+    `C: return ${$('retC').value}% | save ${$('saveC').value}% | invest raise ${$('investC').value}%`,
+  ];
+  scenario.forEach(line=>{ doc.text(line,14,y); y+=6; });
+
+  doc.setFontSize(12); doc.text('FIRE Outputs', 14, y+4); y += 10;
+  const out=[
     `FI Target Net Worth: ${currency(fiTarget)}`,
     `Current Drift Cost: ${$('driftCost').textContent}`,
     `10Y Net Worth Delta: ${$('delta10').textContent}`,
     `FI Delay: ${$('fiDelay').textContent}`,
-    '',
-    `Monte Carlo P10: ${p10}`,
-    `Monte Carlo P50: ${p50}`,
-    `Monte Carlo P90: ${p90}`,
+    `FI Countdown: ${$('fiCountdown').textContent}`,
+    `Monte Carlo P10 / P50 / P90: ${p10} / ${p50} / ${p90}`,
   ];
+  out.forEach(line=>{ doc.text(line,14,y); y+=6; });
 
-  let y=15;
-  lines.forEach(line=>{ doc.text(line, 12, y); y += 7; if(y>280){ doc.addPage(); y=15; } });
+  doc.setFontSize(9); doc.text(`Generated ${new Date().toLocaleString()}`, 14, 286);
   doc.save('WealthArc-Projection-Report.pdf');
   $('profileStatus').textContent='Exported Wealth Projection Report PDF.';
 }
@@ -247,6 +281,7 @@ function render(){
   $('fiAge').textContent=fiAge;
   $('yearsRemain').textContent= fiIndex===-1 ? '>10' : String(fiIndex);
   $('fiCountdown').textContent = fiIndex===-1 ? 'Beyond model horizon' : `${fiIndex}y to freedom`;
+  $('milestoneLine').textContent = fiIndex===-1 ? 'FI Milestone: beyond current horizon' : `FI Milestone: year ${fiIndex} (age ${currAge+fiIndex})`;
 
   const sb=+$('spendBefore').value||0,sa=+$('spendAfter').value||0;
   const monthlyCreep=Math.max(0,sa-sb);
