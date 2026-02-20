@@ -8,6 +8,7 @@ $('loadProfile')?.addEventListener('click', loadProfile);
 $('renameProfile')?.addEventListener('click', renameProfile);
 $('deleteProfile')?.addEventListener('click', deleteProfile);
 $('exportPdf')?.addEventListener('click', exportPdfReport);
+$('exportCsv')?.addEventListener('click', exportCsv);
 $('proMode')?.addEventListener('change', applyProMode);
 
 function currency(n){return `$${Math.round(n).toLocaleString()}`}
@@ -37,7 +38,7 @@ function project({years,nw,income,saveRate,raisePct,raiseInvestPct,ret,infl,taxD
   return {d,l};
 }
 
-function drawTwoLineChart(canvasId,d,l,colorA='#6a88ff',colorB='#c35c76'){
+function drawTwoLineChart(canvasId,d,l,colorA='#6a88ff',colorB='#c35c76', milestoneIndex=-1){
   const c=$(canvasId),ctx=c.getContext('2d');
   const w=c.width,h=c.height,p=40;
   ctx.clearRect(0,0,w,h);
@@ -55,6 +56,18 @@ function drawTwoLineChart(canvasId,d,l,colorA='#6a88ff',colorB='#c35c76'){
   d.forEach((v,i)=> i===0?ctx.moveTo(x(i),y(v)):ctx.lineTo(x(i),y(v)));
   for(let i=l.length-1;i>=0;i--) ctx.lineTo(x(i),y(l[i]));
   ctx.closePath(); ctx.fillStyle='rgba(92,195,255,0.15)'; ctx.fill();
+
+  if(milestoneIndex >= 0){
+    const xx = x(milestoneIndex);
+    ctx.beginPath();
+    ctx.moveTo(xx, p);
+    ctx.lineTo(xx, h-p);
+    ctx.strokeStyle='#9ee493';
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 }
 
 function drawScenarioChart(series){
@@ -258,12 +271,27 @@ function exportPdfReport(){
   $('profileStatus').textContent='Exported Wealth Projection Report PDF.';
 }
 
+function exportCsv(){
+  const b=baseInputs();
+  const years=b.years;
+  const r=project({...b});
+  const rows=['year,disciplined,lifestyleDrift'];
+  for(let i=0;i<=years;i++) rows.push(`${i},${Math.round(r.d[i])},${Math.round(r.l[i])}`);
+  const csv=rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='wealtharc-trajectory.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  $('profileStatus').textContent='Exported CSV trajectory file.';
+}
+
 function render(){
   const b=baseInputs();
   const wr=+$('wr').value||4;
 
   const {d,l}=project({...b});
-  drawTwoLineChart('chart',d,l);
 
   const driftCost = d[d.length-1]-l[l.length-1];
   $('driftCost').textContent=currency(driftCost);
@@ -282,6 +310,7 @@ function render(){
   $('yearsRemain').textContent= fiIndex===-1 ? '>10' : String(fiIndex);
   $('fiCountdown').textContent = fiIndex===-1 ? 'Beyond model horizon' : `${fiIndex}y to freedom`;
   $('milestoneLine').textContent = fiIndex===-1 ? 'FI Milestone: beyond current horizon' : `FI Milestone: year ${fiIndex} (age ${currAge+fiIndex})`;
+  drawTwoLineChart('chart',d,l,'#6a88ff','#c35c76',fiIndex);
 
   const sb=+$('spendBefore').value||0,sa=+$('spendAfter').value||0;
   const monthlyCreep=Math.max(0,sa-sb);
@@ -300,6 +329,15 @@ function render(){
     {name:'B',values:sB,color:'#5cc3ff'},
     {name:'C',values:sC,color:'#9ee493'},
   ]);
+
+  const cards = $('scenarioCards');
+  if(cards){
+    cards.innerHTML = [
+      {n:'A',v:sA[sA.length-1],r:$('retA').value,s:$('saveA').value,i:$('investA').value},
+      {n:'B',v:sB[sB.length-1],r:$('retB').value,s:$('saveB').value,i:$('investB').value},
+      {n:'C',v:sC[sC.length-1],r:$('retC').value,s:$('saveC').value,i:$('investC').value},
+    ].map(x=>`<div class="scenario-card"><h4>Scenario ${x.n}</h4><p>Projected: <strong>${currency(x.v)}</strong></p><p>Return ${x.r}% | Save ${x.s}% | Invest Raise ${x.i}%</p></div>`).join('');
+  }
 }
 
 function runMonteCarlo(){

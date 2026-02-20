@@ -33,7 +33,9 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
 - In-app Pro mode gate UI for advanced modules
 - Profile management actions: rename/delete selected profile
 - Enhanced multi-section PDF report formatting
-- FI milestone marker text on dashboard timeline
+- FI milestone marker text + vertical chart marker
+- Scenario summary cards on dashboard
+- CSV export for disciplined vs drift trajectory series
 
 ## Files
 - `index.html` — app layout/screen composition
