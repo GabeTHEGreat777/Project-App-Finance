@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const ids = ['netWorth','income','saveRate','raisePct','raiseInvestPct','returnPct','inflationPct','horizon','wr','prevIncome','currIncome','spendBefore','spendAfter','retA','retB','retC','saveA','saveB','saveC','investA','investB','investC','raiseA','raiseB','raiseC','sims','volatility','taxDrag','taxModel'];
+const ids = ['netWorth','income','saveRate','raisePct','raiseInvestPct','returnPct','inflationPct','horizon','wr','prevIncome','currIncome','spendBefore','spendAfter','retA','retB','retC','saveA','saveB','saveC','investA','investB','investC','raiseA','raiseB','raiseC','sims','volatility','taxDrag','taxModel','currentAge','fiBandStart','fiBandEnd'];
 ids.forEach(id=>$(id)?.addEventListener('input', render));
 $('runMonte')?.addEventListener('click', runMonteCarlo);
 $('syncTaxModel')?.addEventListener('click', () => { const v = +$('taxModel').value || 1; $('taxDrag').value = String(v); render(); runMonteCarlo(); });
@@ -118,6 +118,11 @@ function drawMonteChart(points){
   ctx.beginPath(); ctx.moveTo(x(0),y(points.p50[0])); points.p50.forEach((v,i)=>ctx.lineTo(x(i),y(v))); ctx.strokeStyle='#5cc3ff'; ctx.lineWidth=3; ctx.stroke();
 }
 
+
+function findScenarioFiYear(series, fiTarget, currentAge){
+  const idx = series.findIndex(v=>v>=fiTarget);
+  return idx===-1 ? 'Beyond horizon' : `Age ${currentAge+idx}`;
+}
 function baseInputs(){
   return {
     nw:+$('netWorth').value||0,
@@ -290,6 +295,9 @@ function exportCsv(){
 function render(){
   const b=baseInputs();
   const wr=+$('wr').value||4;
+  const currentAge=+$('currentAge').value||30;
+  const fiBandStart=+$('fiBandStart').value||40;
+  const fiBandEnd=+$('fiBandEnd').value||50;
 
   const {d,l}=project({...b});
 
@@ -303,14 +311,25 @@ function render(){
   const fiTarget=annualSave/(wr/100||0.04);
   $('fiTarget').textContent=currency(fiTarget);
 
-  const currAge=30;
+
   const fiIndex= d.findIndex(v=>v>=fiTarget);
-  const fiAge= fiIndex===-1 ? '40+' : String(currAge+fiIndex);
+  const fiAgeNum = fiIndex===-1 ? null : (currentAge+fiIndex);
+  const fiAge= fiAgeNum===null ? `${currentAge + b.years}+` : String(fiAgeNum);
   $('fiAge').textContent=fiAge;
-  $('yearsRemain').textContent= fiIndex===-1 ? '>10' : String(fiIndex);
+  $('yearsRemain').textContent= fiIndex===-1 ? `>${b.years}` : String(fiIndex);
   $('fiCountdown').textContent = fiIndex===-1 ? 'Beyond model horizon' : `${fiIndex}y to freedom`;
-  $('milestoneLine').textContent = fiIndex===-1 ? 'FI Milestone: beyond current horizon' : `FI Milestone: year ${fiIndex} (age ${currAge+fiIndex})`;
+  $('milestoneLine').textContent = fiIndex===-1 ? 'FI Milestone: beyond current horizon' : `FI Milestone: year ${fiIndex} (age ${fiAgeNum})`;
   drawTwoLineChart('chart',d,l,'#6a88ff','#c35c76',fiIndex);
+
+  const investPct=+$('raiseInvestPct').value||0;
+  const spendPct=Math.max(0,100-investPct);
+  $('raiseSpendPct').value=String(spendPct);
+  $('raiseSplit').textContent=`${investPct}% / ${spendPct}%`;
+  if(fiAgeNum===null) $('fiBandStatus').textContent='Outside model';
+  else if(fiAgeNum < fiBandStart) $('fiBandStatus').textContent='Ahead of band';
+  else if(fiAgeNum > fiBandEnd) $('fiBandStatus').textContent='Behind band';
+  else $('fiBandStatus').textContent='Inside target band';
+  $('freedomWindow').textContent=`${fiBandStart}-${fiBandEnd} target`;
 
   const sb=+$('spendBefore').value||0,sa=+$('spendAfter').value||0;
   const monthlyCreep=Math.max(0,sa-sb);
@@ -337,6 +356,17 @@ function render(){
       {n:'B',v:sB[sB.length-1],r:$('retB').value,s:$('saveB').value,i:$('investB').value},
       {n:'C',v:sC[sC.length-1],r:$('retC').value,s:$('saveC').value,i:$('investC').value},
     ].map(x=>`<div class="scenario-card"><h4>Scenario ${x.n}</h4><p>Projected: <strong>${currency(x.v)}</strong></p><p>Return ${x.r}% | Save ${x.s}% | Invest Raise ${x.i}%</p></div>`).join('');
+  }
+
+  const tbody = document.querySelector('#scenarioDiffTable tbody');
+  if(tbody){
+    const baseB = sB[sB.length-1];
+    const rows = [
+      {name:'A', value:sA[sA.length-1], years: findScenarioFiYear(sA, fiTarget, currentAge)},
+      {name:'B', value:sB[sB.length-1], years: findScenarioFiYear(sB, fiTarget, currentAge)},
+      {name:'C', value:sC[sC.length-1], years: findScenarioFiYear(sC, fiTarget, currentAge)},
+    ];
+    tbody.innerHTML = rows.map(r=>`<tr><td>${r.name}</td><td>${currency(r.value)}</td><td>${currency(r.value-baseB)}</td><td>${r.years}</td></tr>`).join('');
   }
 }
 
@@ -382,3 +412,5 @@ refreshProfileSelect();
 applyProMode();
 render();
 runMonteCarlo();
+
+
