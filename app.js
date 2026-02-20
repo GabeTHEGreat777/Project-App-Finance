@@ -6,8 +6,17 @@ $('syncTaxModel')?.addEventListener('click', () => { const v = +$('taxModel').va
 $('saveProfile')?.addEventListener('click', saveProfile);
 $('loadProfile')?.addEventListener('click', loadProfile);
 $('exportPdf')?.addEventListener('click', exportPdfReport);
+$('proMode')?.addEventListener('change', applyProMode);
 
 function currency(n){return `$${Math.round(n).toLocaleString()}`}
+
+function isPro(){ return !!$('proMode')?.checked; }
+
+function applyProMode(){
+  const on = isPro();
+  document.querySelectorAll('[data-pro="true"]').forEach(el => el.classList.toggle('pro-locked', !on));
+  if($('proBadge')) $('proBadge').textContent = on ? 'Pro Tier Active' : 'Free Tier';
+}
 
 function project({years,nw,income,saveRate,raisePct,raiseInvestPct,ret,infl,taxDrag=0}){
   const d=[nw], l=[nw];
@@ -143,6 +152,7 @@ function refreshProfileSelect(){
 }
 
 function saveProfile(){
+  if(!isPro()){ $('profileStatus').textContent='Profiles are Pro-only.'; return; }
   const name = ($('profileName')?.value || '').trim() || 'Scenario';
   const profiles = getProfiles();
   profiles[name] = currentFormState();
@@ -153,6 +163,7 @@ function saveProfile(){
 }
 
 function loadProfile(){
+  if(!isPro()){ $('profileStatus').textContent='Load profiles is Pro-only.'; return; }
   const name = $('profileSelect')?.value;
   if(!name) return;
   const profiles = getProfiles();
@@ -163,6 +174,7 @@ function loadProfile(){
 }
 
 function exportPdfReport(){
+  if(!isPro()){ $('profileStatus').textContent='PDF export is Pro-only.'; return; }
   const win = window.jspdf;
   if(!win?.jsPDF){
     $('profileStatus').textContent = 'PDF lib not loaded.';
@@ -256,6 +268,7 @@ function render(){
 }
 
 function runMonteCarlo(){
+  if(!isPro()){ $('p10').textContent='--'; $('p50').textContent='--'; $('p90').textContent='--'; $('profileStatus').textContent='Monte Carlo is Pro-only.'; return; }
   const b=baseInputs();
   const sims=Math.max(20, +$('sims').value||120);
   const vol=+$('volatility').value||12;
@@ -293,5 +306,6 @@ function runMonteCarlo(){
 }
 
 refreshProfileSelect();
+applyProMode();
 render();
 runMonteCarlo();

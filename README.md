@@ -25,11 +25,12 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
 - Monte Carlo preview:
   - simulation count + volatility + tax drag controls
   - P10 / P50 / P90 confidence outcomes
-- Scenario profile save/load (local)
-- PDF export: "Wealth Projection Report"
+- Scenario profile save/load (local, Pro-gated)
+- PDF export: "Wealth Projection Report" (Pro-gated)
 - True scenario A/B/C independent input sets (return, savings rate, raise %, raise-invested %)
 - FI countdown widget output
 - Tax model selector with tax-drag sync
+- In-app Pro mode gate UI for advanced modules
 
 ## Files
 - `index.html` — app layout/screen composition

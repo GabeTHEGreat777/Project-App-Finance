@@ -10,6 +10,10 @@
   <header class="top">
     <h1>WealthArc</h1>
     <p>See how your decisions shift your freedom date.</p>
+    <div class="top-actions">
+      <label class="pro-toggle"><input id="proMode" type="checkbox" /> Pro Mode</label>
+      <span id="proBadge" class="badge">Free Tier</span>
+    </div>
   </header>
 
   <main class="wrap">
@@ -88,7 +92,7 @@
       <canvas id="scenarioChart" width="1200" height="320"></canvas>
     </section>
 
-    <section class="card">
+    <section class="card pro-block" data-pro="true">
       <h2>Monte Carlo (Pro Preview)</h2>
       <div class="row">
         <label>Simulations <input id="sims" type="number" value="120" /></label>
@@ -114,7 +118,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card pro-block" data-pro="true">
       <h2>Scenario Profiles + Export</h2>
       <div class="row">
         <label>Profile Name <input id="profileName" type="text" value="Baseline" /></label>
