@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthArc — FIRE Scenario Modeler</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <h1>WealthArc</h1>
+    <p>See how your decisions shift your freedom date.</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Trajectory Dashboard</h2>
+      <div class="row">
+        <label>Current Net Worth <input id="netWorth" type="number" value="50000" /></label>
+        <label>Annual Income <input id="income" type="number" value="100000" /></label>
+        <label>Savings Rate % <input id="saveRate" type="number" value="25" /></label>
+        <label>Raise % <input id="raisePct" type="number" value="5" /></label>
+      </div>
+      <div class="row">
+        <label>Raise Invested % <input id="raiseInvestPct" type="number" value="70" /></label>
+        <label>Return % <input id="returnPct" type="number" value="7" /></label>
+        <label>Inflation % <input id="inflationPct" type="number" value="3" /></label>
+        <label>Years
+          <select id="horizon">
+            <option>5</option><option selected>10</option><option>20</option><option>30</option>
+          </select>
+        </label>
+      </div>
+      <canvas id="chart" width="1200" height="420"></canvas>
+      <div class="metrics">
+        <div><span>Current Drift Cost</span><strong id="driftCost">$0</strong></div>
+        <div><span>10Y Net Worth Delta</span><strong id="delta10">$0</strong></div>
+        <div><span>FI Delay</span><strong id="fiDelay">0 years</strong></div>
+      </div>
+    </section>
+
+    <section class="card grid2">
+      <div>
+        <h2>Financial Independence Calculator</h2>
+        <label>Target Withdrawal Rate % <input id="wr" type="number" value="4" /></label>
+        <div class="metrics small">
+          <div><span>FI Target Net Worth</span><strong id="fiTarget">$0</strong></div>
+          <div><span>Estimated FI Age</span><strong id="fiAge">--</strong></div>
+          <div><span>Years Remaining</span><strong id="yearsRemain">--</strong></div>
+        </div>
+      </div>
+
+      <div>
+        <h2>Lifestyle Creep Analyzer</h2>
+        <label>Previous Income <input id="prevIncome" type="number" value="80000" /></label>
+        <label>Current Income <input id="currIncome" type="number" value="100000" /></label>
+        <label>Monthly Spend Before <input id="spendBefore" type="number" value="3500" /></label>
+        <label>Monthly Spend After <input id="spendAfter" type="number" value="4500" /></label>
+        <div class="metrics small">
+          <div><span>Monthly Creep</span><strong id="monthlyCreep">$0</strong></div>
+          <div><span>Annual Opportunity Cost</span><strong id="annualCost">$0</strong></div>
+          <div><span>10Y Compounded Loss</span><strong id="compLoss">$0</strong></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
