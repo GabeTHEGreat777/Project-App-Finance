@@ -45,9 +45,8 @@ function percentile(arr, p) {
   return arr[idx];
 }
 
-function buildPath(points, width, height, maxV, minV) {
+function buildPath(points, width, height, maxV, minV, p = 12) {
   if (!points.length) return '';
-  const p = 12;
   const w = width - p * 2;
   const h = height - p * 2;
   const range = Math.max(1, maxV - minV);
@@ -60,52 +59,82 @@ function buildPath(points, width, height, maxV, minV) {
     .join(' ');
 }
 
+function buildSpreadAreaPath(top, bottom, width, height, maxV, minV, pad = 12) {
+  if (!top.length || top.length !== bottom.length) return '';
+  const w = width - pad * 2;
+  const h = height - pad * 2;
+  const range = Math.max(1, maxV - minV);
+  const point = (arr, i) => {
+    const x = pad + (i / (arr.length - 1 || 1)) * w;
+    const y = pad + (1 - (arr[i] - minV) / range) * h;
+    return `${x} ${y}`;
+  };
+
+  const forward = top.map((_, i) => `${i === 0 ? 'M' : 'L'} ${point(top, i)}`).join(' ');
+  const backward = [...bottom].reverse().map((_, j) => {
+    const i = bottom.length - 1 - j;
+    return `L ${point(bottom, i)}`;
+  }).join(' ');
+
+  return `${forward} ${backward} Z`;
+}
+
 function TrajectoryChart({ disciplined, drift, fiYear }) {
-  const width = 340;
-  const height = 220;
+  const width = 360;
+  const height = 250;
+  const p = 14;
   const maxV = Math.max(...disciplined, ...drift);
   const minV = Math.min(...disciplined, ...drift);
-  const dPath = buildPath(disciplined, width, height, maxV, minV);
-  const lPath = buildPath(drift, width, height, maxV, minV);
-  const p = 12;
+  const dPath = buildPath(disciplined, width, height, maxV, minV, p);
+  const lPath = buildPath(drift, width, height, maxV, minV, p);
   const plotW = width - p * 2;
+  const plotH = height - p * 2;
   const xFi = fiYear >= 0 ? p + (fiYear / ((disciplined.length - 1) || 1)) * plotW : null;
+
+  const yFrom = (v) => p + (1 - (v - minV) / Math.max(1, maxV - minV)) * plotH;
+  const areaPath = buildSpreadAreaPath(disciplined, drift, width, height, maxV, minV, p);
 
   return (
     <View style={styles.chartWrap}>
       <Text style={styles.chartTitle}>Net Worth Trajectory</Text>
-      <Svg width="100%" viewBox={`0 0 ${width} ${height}`}>
+      <Svg width="100%" height={250} viewBox={`0 0 ${width} ${height}`}>
         <Defs>
           <LinearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor="#121a2d" />
             <Stop offset="100%" stopColor="#0b0f18" />
+          </LinearGradient>
+          <LinearGradient id="spreadGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor="#6A88FF" stopOpacity="0.24" />
+            <Stop offset="100%" stopColor="#6A88FF" stopOpacity="0.03" />
           </LinearGradient>
         </Defs>
 
         <Rect x="0" y="0" width={width} height={height} rx="14" fill="url(#bgGrad)" />
 
         {[0, 0.25, 0.5, 0.75, 1].map((k) => {
-          const y = p + k * (height - p * 2);
+          const y = p + k * plotH;
           return <Line key={k} x1={p} y1={y} x2={width - p} y2={y} stroke="#24304a" strokeWidth="1" />;
         })}
+
+        <Path d={areaPath} fill="url(#spreadGrad)" />
 
         {xFi !== null && (
           <>
             <Line x1={xFi} y1={p} x2={xFi} y2={height - p} stroke="#9EE493" strokeWidth="2" strokeDasharray="5,4" />
-            <SvgText x={xFi + 4} y={p + 11} fill="#9EE493" fontSize="10">FI</SvgText>
+            <SvgText x={xFi + 4} y={p + 12} fill="#9EE493" fontSize="10">FI</SvgText>
           </>
         )}
 
         <Path d={lPath} stroke="#C35C76" strokeWidth="3" fill="none" />
-        <Path d={dPath} stroke="#5CC3FF" strokeWidth="3" fill="none" />
+        <Path d={dPath} stroke="#6A88FF" strokeWidth="3" fill="none" />
 
-        <Circle cx={width - p} cy={p + (1 - (disciplined[disciplined.length - 1] - minV) / Math.max(1, maxV - minV)) * (height - p * 2)} r="3.5" fill="#5CC3FF" />
-        <Circle cx={width - p} cy={p + (1 - (drift[drift.length - 1] - minV) / Math.max(1, maxV - minV)) * (height - p * 2)} r="3.5" fill="#C35C76" />
+        <Circle cx={width - p} cy={yFrom(disciplined[disciplined.length - 1])} r="4" fill="#6A88FF" />
+        <Circle cx={width - p} cy={yFrom(drift[drift.length - 1])} r="4" fill="#C35C76" />
       </Svg>
       <View style={styles.legendRow}>
-        <Text style={[styles.legend, { color: '#5CC3FF' }]}>■ Disciplined</Text>
-        <Text style={[styles.legend, { color: '#C35C76' }]}>■ Drift</Text>
-        <Text style={[styles.legend, { color: '#9EE493' }]}>■ FI Marker</Text>
+        <Text style={[styles.legend, { color: '#6A88FF' }]}>● Disciplined</Text>
+        <Text style={[styles.legend, { color: '#C35C76' }]}>● Drift</Text>
+        <Text style={[styles.legend, { color: '#9EE493' }]}>● FI Marker</Text>
       </View>
     </View>
   );
@@ -221,7 +250,7 @@ export default function App() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.wrap}>
       <Text style={styles.title}>WealthArc Mobile</Text>
-      <Text style={styles.sub}>Now with real chart visuals (matching the web feel).</Text>
+      <Text style={styles.sub}>Reworked charts to match the web-style trajectory look.</Text>
 
       <TrajectoryChart disciplined={output.d} drift={output.l} fiYear={output.fiYear} />
       <ScenarioBarChart a={output.sA} b={output.sB} c={output.sC} />
