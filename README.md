@@ -21,6 +21,10 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
   - Monthly creep
   - Annual opportunity cost
   - 10-year compounded loss
+- Scenario comparison chart (A/B/C return assumptions)
+- Monte Carlo preview:
+  - simulation count + volatility + tax drag controls
+  - P10 / P50 / P90 confidence outcomes
 
 ## Files
 - `index.html` — app layout/screen composition
