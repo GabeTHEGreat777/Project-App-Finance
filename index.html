@@ -90,8 +90,23 @@
         <div><span>P90 Outcome</span><strong id="p90">$0</strong></div>
       </div>
     </section>
+
+    <section class="card">
+      <h2>Scenario Profiles + Export</h2>
+      <div class="row">
+        <label>Profile Name <input id="profileName" type="text" value="Baseline" /></label>
+        <label><button id="saveProfile" type="button">Save Profile</button></label>
+        <label><button id="loadProfile" type="button">Load Profile</button></label>
+        <label><button id="exportPdf" type="button">Export Projection Report (PDF)</button></label>
+      </div>
+      <label>Saved Profiles
+        <select id="profileSelect"></select>
+      </label>
+      <p id="profileStatus">No profiles saved yet.</p>
+    </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

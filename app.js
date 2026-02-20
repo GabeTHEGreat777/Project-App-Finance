@@ -2,6 +2,9 @@ const $ = id => document.getElementById(id);
 const ids = ['netWorth','income','saveRate','raisePct','raiseInvestPct','returnPct','inflationPct','horizon','wr','prevIncome','currIncome','spendBefore','spendAfter','retA','retB','retC','scenarioInvest','sims','volatility','taxDrag'];
 ids.forEach(id=>$(id)?.addEventListener('input', render));
 $('runMonte')?.addEventListener('click', runMonteCarlo);
+$('saveProfile')?.addEventListener('click', saveProfile);
+$('loadProfile')?.addEventListener('click', loadProfile);
+$('exportPdf')?.addEventListener('click', exportPdfReport);
 
 function currency(n){return `$${Math.round(n).toLocaleString()}`}
 
@@ -103,6 +106,106 @@ function baseInputs(){
   }
 }
 
+function currentFormState(){
+  const state = {};
+  ids.forEach(id => state[id] = $(id)?.value ?? '');
+  return state;
+}
+
+function applyFormState(state){
+  if(!state) return;
+  ids.forEach(id => { if($(id) && state[id] !== undefined) $(id).value = state[id]; });
+}
+
+function getProfiles(){
+  try { return JSON.parse(localStorage.getItem('wealtharc_profiles') || '{}'); }
+  catch { return {}; }
+}
+
+function setProfiles(p){ localStorage.setItem('wealtharc_profiles', JSON.stringify(p)); }
+
+function refreshProfileSelect(){
+  const select = $('profileSelect');
+  if(!select) return;
+  const profiles = getProfiles();
+  select.innerHTML = '';
+  const keys = Object.keys(profiles);
+  if(keys.length===0){
+    const o = document.createElement('option');
+    o.textContent='(none)'; o.value='';
+    select.appendChild(o);
+    $('profileStatus').textContent='No profiles saved yet.';
+    return;
+  }
+  keys.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; select.appendChild(o); });
+  $('profileStatus').textContent=`${keys.length} profile(s) saved.`;
+}
+
+function saveProfile(){
+  const name = ($('profileName')?.value || '').trim() || 'Scenario';
+  const profiles = getProfiles();
+  profiles[name] = currentFormState();
+  setProfiles(profiles);
+  refreshProfileSelect();
+  $('profileSelect').value = name;
+  $('profileStatus').textContent = `Saved profile: ${name}`;
+}
+
+function loadProfile(){
+  const name = $('profileSelect')?.value;
+  if(!name) return;
+  const profiles = getProfiles();
+  applyFormState(profiles[name]);
+  $('profileStatus').textContent = `Loaded profile: ${name}`;
+  render();
+  runMonteCarlo();
+}
+
+function exportPdfReport(){
+  const win = window.jspdf;
+  if(!win?.jsPDF){
+    $('profileStatus').textContent = 'PDF lib not loaded.';
+    return;
+  }
+  const doc = new win.jsPDF();
+  const b = baseInputs();
+  const wr = +$('wr').value||4;
+  const p10 = $('p10').textContent;
+  const p50 = $('p50').textContent;
+  const p90 = $('p90').textContent;
+
+  const annualSave=b.income*(b.saveRate/100);
+  const fiTarget=annualSave/(wr/100||0.04);
+
+  const lines = [
+    'WealthArc - Wealth Projection Report',
+    'Tagline: See how your decisions shift your freedom date.',
+    '',
+    `Net Worth: ${currency(b.nw)}`,
+    `Income: ${currency(b.income)}`,
+    `Savings Rate: ${b.saveRate}%`,
+    `Raise %: ${b.raisePct}%`,
+    `Raise Invested %: ${b.raiseInvestPct}%`,
+    `Return %: ${b.ret}%`,
+    `Inflation %: ${b.infl}%`,
+    `Horizon: ${b.years} years`,
+    '',
+    `FI Target Net Worth: ${currency(fiTarget)}`,
+    `Current Drift Cost: ${$('driftCost').textContent}`,
+    `10Y Net Worth Delta: ${$('delta10').textContent}`,
+    `FI Delay: ${$('fiDelay').textContent}`,
+    '',
+    `Monte Carlo P10: ${p10}`,
+    `Monte Carlo P50: ${p50}`,
+    `Monte Carlo P90: ${p90}`,
+  ];
+
+  let y=15;
+  lines.forEach(line=>{ doc.text(line, 12, y); y += 7; if(y>280){ doc.addPage(); y=15; } });
+  doc.save('WealthArc-Projection-Report.pdf');
+  $('profileStatus').textContent='Exported Wealth Projection Report PDF.';
+}
+
 function render(){
   const b=baseInputs();
   const wr=+$('wr').value||4;
@@ -183,5 +286,6 @@ function runMonteCarlo(){
   $('p90').textContent=currency(p90[p90.length-1]);
 }
 
+refreshProfileSelect();
 render();
 runMonteCarlo();

@@ -25,6 +25,8 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
 - Monte Carlo preview:
   - simulation count + volatility + tax drag controls
   - P10 / P50 / P90 confidence outcomes
+- Scenario profile save/load (local)
+- PDF export: "Wealth Projection Report"
 
 ## Files
 - `index.html` — app layout/screen composition
