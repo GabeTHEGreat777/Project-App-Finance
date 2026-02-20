@@ -1,7 +1,8 @@
 const $ = id => document.getElementById(id);
-const ids = ['netWorth','income','saveRate','raisePct','raiseInvestPct','returnPct','inflationPct','horizon','wr','prevIncome','currIncome','spendBefore','spendAfter','retA','retB','retC','scenarioInvest','sims','volatility','taxDrag'];
+const ids = ['netWorth','income','saveRate','raisePct','raiseInvestPct','returnPct','inflationPct','horizon','wr','prevIncome','currIncome','spendBefore','spendAfter','retA','retB','retC','saveA','saveB','saveC','investA','investB','investC','raiseA','raiseB','raiseC','sims','volatility','taxDrag','taxModel'];
 ids.forEach(id=>$(id)?.addEventListener('input', render));
 $('runMonte')?.addEventListener('click', runMonteCarlo);
+$('syncTaxModel')?.addEventListener('click', () => { const v = +$('taxModel').value || 1; $('taxDrag').value = String(v); render(); runMonteCarlo(); });
 $('saveProfile')?.addEventListener('click', saveProfile);
 $('loadProfile')?.addEventListener('click', loadProfile);
 $('exportPdf')?.addEventListener('click', exportPdfReport);
@@ -189,6 +190,11 @@ function exportPdfReport(){
     `Return %: ${b.ret}%`,
     `Inflation %: ${b.infl}%`,
     `Horizon: ${b.years} years`,
+    `Tax Drag: ${$('taxDrag').value}% (model ${$('taxModel').value}%)`,
+    '',
+    `Scenario A: return ${$('retA').value}% | save ${$('saveA').value}% | invest raise ${$('investA').value}%`,
+    `Scenario B: return ${$('retB').value}% | save ${$('saveB').value}% | invest raise ${$('investB').value}%`,
+    `Scenario C: return ${$('retC').value}% | save ${$('saveC').value}% | invest raise ${$('investC').value}%`,
     '',
     `FI Target Net Worth: ${currency(fiTarget)}`,
     `Current Drift Cost: ${$('driftCost').textContent}`,
@@ -228,6 +234,7 @@ function render(){
   const fiAge= fiIndex===-1 ? '40+' : String(currAge+fiIndex);
   $('fiAge').textContent=fiAge;
   $('yearsRemain').textContent= fiIndex===-1 ? '>10' : String(fiIndex);
+  $('fiCountdown').textContent = fiIndex===-1 ? 'Beyond model horizon' : `${fiIndex}y to freedom`;
 
   const sb=+$('spendBefore').value||0,sa=+$('spendAfter').value||0;
   const monthlyCreep=Math.max(0,sa-sb);
@@ -238,10 +245,9 @@ function render(){
   $('compLoss').textContent=currency(compLoss);
   $('fiDelay').textContent = driftCost>0 ? `${Math.max(1,Math.round(driftCost/(annualSave||1)))} years` : '0 years';
 
-  const scenarioInvest=+$('scenarioInvest').value||70;
-  const sA=project({...b,ret:+$('retA').value||6,raiseInvestPct:scenarioInvest}).d;
-  const sB=project({...b,ret:+$('retB').value||7,raiseInvestPct:scenarioInvest}).d;
-  const sC=project({...b,ret:+$('retC').value||9,raiseInvestPct:scenarioInvest}).d;
+  const sA=project({...b,ret:+$('retA').value||6,saveRate:+$('saveA').value||22,raiseInvestPct:+$('investA').value||55,raisePct:+$('raiseA').value||4}).d;
+  const sB=project({...b,ret:+$('retB').value||7,saveRate:+$('saveB').value||28,raiseInvestPct:+$('investB').value||70,raisePct:+$('raiseB').value||5}).d;
+  const sC=project({...b,ret:+$('retC').value||9,saveRate:+$('saveC').value||35,raiseInvestPct:+$('investC').value||90,raisePct:+$('raiseC').value||6}).d;
   drawScenarioChart([
     {name:'A',values:sA,color:'#6a88ff'},
     {name:'B',values:sB,color:'#5cc3ff'},

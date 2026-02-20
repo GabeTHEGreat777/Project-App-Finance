@@ -27,6 +27,9 @@ A FIRE-focused financial trajectory visualizer for professionals 20–40.
   - P10 / P50 / P90 confidence outcomes
 - Scenario profile save/load (local)
 - PDF export: "Wealth Projection Report"
+- True scenario A/B/C independent input sets (return, savings rate, raise %, raise-invested %)
+- FI countdown widget output
+- Tax model selector with tax-drag sync
 
 ## Files
 - `index.html` — app layout/screen composition

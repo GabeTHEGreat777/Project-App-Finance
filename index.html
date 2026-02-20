@@ -47,6 +47,7 @@
           <div><span>FI Target Net Worth</span><strong id="fiTarget">$0</strong></div>
           <div><span>Estimated FI Age</span><strong id="fiAge">--</strong></div>
           <div><span>Years Remaining</span><strong id="yearsRemain">--</strong></div>
+          <div><span>FI Countdown</span><strong id="fiCountdown">--</strong></div>
         </div>
       </div>
 
@@ -67,10 +68,22 @@
     <section class="card">
       <h2>Scenario Comparison (A / B / C)</h2>
       <div class="row">
-        <label>Scenario A Return % <input id="retA" type="number" value="6" /></label>
-        <label>Scenario B Return % <input id="retB" type="number" value="7" /></label>
-        <label>Scenario C Return % <input id="retC" type="number" value="9" /></label>
-        <label>Scenario Raise Invested % <input id="scenarioInvest" type="number" value="70" /></label>
+        <label>A Return % <input id="retA" type="number" value="6" /></label>
+        <label>A Savings Rate % <input id="saveA" type="number" value="22" /></label>
+        <label>A Raise Invested % <input id="investA" type="number" value="55" /></label>
+        <label>A Raise % <input id="raiseA" type="number" value="4" /></label>
+      </div>
+      <div class="row">
+        <label>B Return % <input id="retB" type="number" value="7" /></label>
+        <label>B Savings Rate % <input id="saveB" type="number" value="28" /></label>
+        <label>B Raise Invested % <input id="investB" type="number" value="70" /></label>
+        <label>B Raise % <input id="raiseB" type="number" value="5" /></label>
+      </div>
+      <div class="row">
+        <label>C Return % <input id="retC" type="number" value="9" /></label>
+        <label>C Savings Rate % <input id="saveC" type="number" value="35" /></label>
+        <label>C Raise Invested % <input id="investC" type="number" value="90" /></label>
+        <label>C Raise % <input id="raiseC" type="number" value="6" /></label>
       </div>
       <canvas id="scenarioChart" width="1200" height="320"></canvas>
     </section>
@@ -80,8 +93,18 @@
       <div class="row">
         <label>Simulations <input id="sims" type="number" value="120" /></label>
         <label>Volatility % <input id="volatility" type="number" value="12" /></label>
-        <label>Tax Drag % <input id="taxDrag" type="number" value="1" /></label>
+        <label>Tax Model
+          <select id="taxModel">
+            <option value="0.5">Low Tax Drag</option>
+            <option value="1" selected>Balanced Tax Drag</option>
+            <option value="2">High Tax Drag</option>
+          </select>
+        </label>
+        <label>Tax Drag Override % <input id="taxDrag" type="number" value="1" /></label>
+      </div>
+      <div class="row">
         <label><button id="runMonte" type="button">Run Monte Carlo</button></label>
+        <label><button id="syncTaxModel" type="button">Apply Tax Model</button></label>
       </div>
       <canvas id="monteChart" width="1200" height="320"></canvas>
       <div class="metrics small">
